@@ -1,0 +1,201 @@
+---
+title: "biostat776 - Project 1 - Solution"
+author: "Zhengting (Johnathan) He"
+date: "2021/9/9"
+output: html_document
+---
+
+```{r "setup", include = FALSE}
+require("knitr")
+opts_knit$set(root.dir = "D:/OneDrive - Johns Hopkins/Course/140.776.71 - Statistical Computing/project/Project 1")
+```
+
+```{r}
+# Set working directory and load packages
+setwd("D:/OneDrive - Johns Hopkins/Course/140.776.71 - Statistical Computing/project/Project 1/biostats776-Project1")
+
+require(tidyverse)
+```
+
+```{r}
+# Import dataset
+tuesdata <- tidytuesdayR::tt_load('2020-01-21')
+
+spotify_songs <- tuesdata$spotify_songs
+glimpse(spotify_songs)
+```
+
+# Part 1: Explore data
+
+In this part, use functions from `dplyr` to answer the following questions. 
+
+1. How many songs are in each genre? 
+
+```{r}
+spotify_songs %>%
+    group_by(playlist_genre) %>%
+    count() %>%
+    knitr::kable()
+```
+
+
+2. What is average value of `energy` and `acousticness` in the `latin` genre in this dataset?
+
+```{r}
+spotify_songs %>%
+    filter(playlist_genre == "latin") %>%
+    summarise(energy_mean = mean(energy, na.rm = FALSE),
+    acousticness_mean = mean(acousticness, na.rm = FALSE)) %>%
+    knitr::kable()
+```
+
+
+3. Calculate the average duration of song (in minutes) across all subgenres. Which subgenre has the longest song on average?
+
+```{r}
+spotify_songs %>%
+    mutate(duration_m = (duration_ms/1000)/60) %>%
+    group_by(playlist_subgenre) %>%
+    summarise(duration_mean = mean(duration_m, na.rm = FALSE)) %>%
+    arrange(duration_mean) %>%
+    knitr::kable()
+```
+
+```
+# Subgenre "progressive electro house" has the longest song on average.
+```
+
+
+4. Make two boxplots side-by-side of the `danceability` of songs stratifying by whether a song has a fast or slow tempo. Define fast tempo as any song that has a `tempo` above its median value. On average, which songs are more danceable?
+
+**Hint**: You may find the `case_when()` function useful in this part, which can be used to map values from one variable to different values in a new variable (when used in a `mutate()` call).
+
+```{r}
+spotify_songs %>%
+    mutate(tempo_cat = case_when(tempo > median(tempo, na.rm = TRUE) ~ "fast",
+                                 TRUE ~ "slow")) %>%
+    mutate(tempo_cat = factor(tempo_cat, levels = c("fast", "slow"))) %>%
+    ggplot(aes(x = tempo_cat, y = danceability)) +
+    stat_boxplot(geom = "errorbar", width = 0.2) +
+    geom_boxplot(aes(fill = tempo_cat)) +
+    labs(title = "Danceability of Songs Stratified by Tempo") +
+    xlab("Tempo Categoty of Songs") +
+    ylab("Danceability of Songs") +
+    scale_x_discrete(labels = c("Fast", "Slow")) +
+    scale_fill_manual(values = c("#439fd3", "#f6b128"),
+                      labels = c("Fast", "Slow"),
+                      guide = "none") +
+    theme_bw()
+```
+
+```
+# On average, songs having slow tempo are more danceable.
+```
+
+
+# Part 2: Convert nontidy data into tidy data
+
+Use the functions in `dplyr`, `tidyr`, and `lubridate` to perform the following steps to the `spotify_songs` dataset: 
+
+1. Select only unique distinct rows from the dataset based on the `track_name` and `track_artist` columns (**Hint** check out the `distinct()` function in `dplyr`). 
+2. Add a new column called `year_released` listing just the year that the song was released. (**Hint** check out the `ymd()` function in `lubridate` R package. Also, if you get a warning message with "failed to parse", check out the `truncated` argument in the `ymd()` function.).
+3. Keep only songs that were released in or after 1980. 
+4. Add a new column with the duration of the song in minutes
+5. For each `year_released`, calculate the mean of at least 6 of the audio features (e.g. danceability, energy, loudness, etc), or descriptors (e.g. tempo, duration in minutes, etc). (**Hint**: If all has gone well thus far, you should have a dataset with 41 rows and 7 columns). 
+6. Convert this wide dataset into a long dataset with a new `feature` and `mean_score` column
+
+It should look something like this: 
+
+```
+year_released   feature   mean_score
+<dbl>           <chr>       <dbl>
+1980	Danceability	0.5633676		
+1980	Energy	0.7107647		
+1980	Loudness	-8.5211765		
+1980	Valence	0.6333235		
+1980	Tempo	124.1458529		
+1980	Duration	4.2853662		
+1981	Danceability	0.5697258		
+1981	Energy	0.6967581		
+1981	Loudness	-8.8678065		
+1981	Valence	0.6650968	
+```
+
+### Notes
+
+* You may need to use functions outside these packages to obtain this result.
+
+* Note that the functions in the `dplyr` and `tidyr` package expect table-like objects (data frames or tibbles) as their input. You can convert data to these objects using the `as_tibble()` function in the `tibble` package.
+
+* Do not worry about the ordering of the rows or columns. Depending on whether you use `gather()` or `pivot_longer()`, the order of your output may differ from what is printed above. As long as the result is a tidy data set, that is sufficient.
+
+
+```{r}
+songs.summary <- spotify_songs %>%
+                     distinct(track_name, track_artist, .keep_all = TRUE) %>%
+                     mutate(track_album_release_date = lubridate::ymd(track_album_release_date, truncated = 2)) %>%
+                     mutate(year_released = format(track_album_release_date, format = "%Y")) %>%
+                     mutate(year_released = as.numeric(year_released)) %>%
+                     filter(year_released >= 1980) %>%
+                     mutate(duration_m = (duration_ms/1000)/60) %>%
+                     group_by(year_released) %>%
+                     summarise(Danceability = mean(danceability, na.rm = TRUE),
+                               Energy = mean(energy, na.rm = TRUE),
+                               Loudness = mean(loudness, na.rm = TRUE),
+                               Tempo = mean(tempo, na.rm = TRUE),
+                               Duration = mean(duration_m, na.rm = TRUE),
+                               Valence = mean(valence, na.rm = TRUE)) %>%
+                     pivot_longer(- year_released, names_to = "feature", values_to = "mean_score")
+print(songs.summary %>% knitr::kable())
+```
+
+
+# Part 3: Data visualization
+
+In this part of the project, we will continue to work with our now tidy song dataset from the previous part. 
+
+### Tasks 
+
+Use the functions in `ggplot2` package to make a scatter plot of the six (or more) `mean_score`s (y-axis) over time (x-axis). For full credit, your plot should include: 
+
+1. An overall title for the plot and a subtitle summarizing key trends that you found. Also include a caption in the figure with your name. 
+2. Both the observed points for the `mean_score`, but also a smoothed non-linear pattern of the trend
+3. All six (or more) plots should be shown in the one figure 
+4. There should be an informative x-axis and y-axis label
+
+Consider playing around with the `theme()` function to make the figure shine, including playing with background colors, font, etc.
+
+### Notes
+
+* You may need to use functions outside these packages to obtain this result.
+
+* Note that the functions in the `dplyr` and `tidyr` package expect table-like objects (data frames or tibbles) as their input. You can convert data to these objects using the `as_tibble()` function in the `tibble` package.
+
+* Don't worry about the ordering of the rows or columns. Depending on whether you use `gather()` or `pivot_longer()`, the order of your output may differ from what is printed above. As long as the result is a tidy data set, that is sufficient.
+
+
+```{r}
+songs.summary %>%
+    ggplot(aes(x = year_released, y = mean_score)) +
+    geom_point(aes(colour = feature), size = 1) +
+    geom_smooth(aes(colour = feature)) +
+    facet_wrap(~ feature) +
+    labs(x = "Year When Album Released",
+         y = "Mean of Audio Features",
+         title = "Scatter Plot of 6 Mean Scores of Audio Features Over Time",
+         subtitle = "Trend of mean scores of audio features seems stable over time, except for fluctuation in Tempo",
+         caption = "Plotted by Zhengting (Johnathan) He") +
+    scale_colour_manual(values = c("#0ebeff", "#47cf73", "#ae63e4", "#fcd000", "#ff3c41", "#76daff"),
+                        guide = "none") +
+    theme(panel.background = element_rect(fill='transparent', color='black'),
+          panel.border = element_rect(fill='transparent', color='transparent'),
+          panel.grid = element_blank(),
+          plot.title = element_text(size = 14, face = "bold", color = "black"),
+          plot.subtitle = element_text(size = 10, face = "bold", color = "black"),
+          plot.caption = element_text(size = 10, color = "black"),
+          axis.title.x = element_text(size = 12, face = "bold", color = "black"),
+          axis.title.y = element_text(size = 12, face = "bold", color = "black"),
+          axis.text = element_text(size = 10, color = "black"),
+          strip.background = element_rect(fill='transparent', color='black'),
+          strip.text.x = element_text(size = 12, face = "bold", color = "black"))
+```
