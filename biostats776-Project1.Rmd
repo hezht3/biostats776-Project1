@@ -146,7 +146,7 @@ songs.summary <- spotify_songs %>%
                                Duration = mean(duration_m, na.rm = TRUE),
                                Valence = mean(valence, na.rm = TRUE)) %>%
                      pivot_longer(- year_released, names_to = "feature", values_to = "mean_score")
-print(songs.summary %>% knitr::kable())
+songs.summary %>% knitr::kable()
 ```
 
 
@@ -195,7 +195,116 @@ songs.summary %>%
           plot.caption = element_text(size = 10, color = "black"),
           axis.title.x = element_text(size = 12, face = "bold", color = "black"),
           axis.title.y = element_text(size = 12, face = "bold", color = "black"),
-          axis.text = element_text(size = 10, color = "black"),
+          axis.text = element_text(size = 8, color = "black"),
           strip.background = element_rect(fill='transparent', color='black'),
           strip.text.x = element_text(size = 12, face = "bold", color = "black"))
 ```
+
+
+# Part 4: Make the worst plot you can! 
+
+This sounds a bit crazy I know, but I want this to be FUN! Instead of trying to make a "good" plot, I want you to explore your creative side and make a really awful data visualization in every way. :)
+
+### Tasks
+
+Using the `spotify_songs` dataset (and it does not have to be the tidy dataset that we created in Part 2, it can be anything from the original dataset): 
+
+1. Make the absolute worst plot that you can. You need to customize it in **at least 7 ways** to make it awful. 
+2. In your document, write 1 - 2 sentences about each different customization you added (using bullets -- i.e. there should be at least 7 bullet points each with 1-2 sentences), and how it could be useful for you when you want to make an awesome data visualization.  
+
+
+```{r}
+spotify_songs %>%
+    ggplot(aes(x = playlist_genre)) +
+    geom_jitter(aes(y = valence)) +
+    geom_jitter(aes(y = tempo)) +
+    geom_jitter(aes(y = key)) +
+    geom_jitter(aes(y = speechiness)) +
+    geom_jitter(aes(y = acousticness)) +
+    geom_jitter(aes(y = liveness)) +
+    theme(panel.background = element_rect(fill = "grey50", colour = NA),
+          panel.grid = element_line(colour = "grey42"), 
+          panel.grid.major = element_line(size = rel(0.5)), 
+          panel.grid.minor = element_line(size = rel(0.25)),
+          axis.title.x = element_text(size = 40, face = "bold", color = "black"),
+          axis.title.y = element_text(size = 40, face = "bold", color = "black"),
+          axis.text = element_text(size = 40, color = "black"))
+```
+
+**Different customization I added**
+
++ **Facet** of the plot: I did not use `ggplot2::facet_wrap()` to separate characteristics of the songs - *such as danceability, energy, key, etc.* - to different facets. Thus, the jitter points for each characteristics are massed up together, and hard to see the trend.
+
++ **Type** of the plot: I used `ggplot2::geom_jitter()` function to make the plot, which **mainly apply to smaller datasets**, and is not a good way to compare the differences between characteristics in different playlist genre group.
+
++ **Theme** for the plot: I change the arguments in the `ggplots::theme()` function based on the default value of ggplots theme `theme_dark()`, which **makes the panel a dark background**, and hard to distinguish the points from the panel.
+
++ **Font size** of axis text: The font size of the axis text is too large, causing x-axis text overlap between each other.
+
++ **Font size** of axis title: The font size of both x-axis and y-axis are too large, making the panel small to the readers, and makes it even harder to infer the differences between characteristics in different playlist genre group. Also, the y-axis only shows one characteristic - *danceability*.
+
++ **No title and caption** for the plot: The plot has no title or caption, making readers hard to understand what the plot is aiming to visualize.
+
++ **No file or color** for different playlist genre groups: File or color by playlist genre groups may make it easier for readers to make comparison between these different playlist genre.
+
+
+# Part 5: Make my plot a better plot! 
+
+The goal is to take my sad looking plot and make it better! If you'd like an [example](https://twitter.com/drmowinckels/status/1392136510468763652), here is a tweet I came across of someone who gave a talk about how to zhoosh up your ggplots. 
+
+```{r}
+spotify_songs %>% 
+  ggplot(aes(y=track_popularity, x=playlist_subgenre, fill = playlist_genre)) + 
+  geom_violin() +
+  facet_wrap( ~ playlist_genre, scales = "free_x")
+```
+### Tasks 
+
+1. You need to customize it in **at least 7 ways** to make it better. 
+2. In your document, write 1 - 2 sentences about each different customization you added (using bullets -- i.e. there should be at least 7 bullet points each with 1-2 sentences), describing how you improved it.
+
+
+```{r}
+spotify_songs %>%
+    select(playlist_genre, valence, tempo, key, speechiness:acousticness, liveness) %>%
+    pivot_longer(- playlist_genre, names_to = "characteristic", values_to = "value") %>%
+    mutate(value = log10(value)) %>%
+    ggplot(aes(x = playlist_genre, y = value, fill = playlist_genre)) +
+    stat_boxplot(geom = "errorbar", width = 0.2) +
+    geom_boxplot() +
+    facet_wrap(characteristic ~ .) +
+    labs(x = "Playlist Genre",
+         y = "Audio Features on log 10 scale",
+         title = "Box and Wisker Plot of 6 Audio Features In Different Playlist Genre",
+         caption = "Plotted by Zhengting (Johnathan) He") +
+    scale_fill_manual(values = c("#0ebeff", "#47cf73", "#ae63e4", "#fcd000", "#ff3c41", "#76daff"),
+                        guide = "none") +
+    scale_x_discrete(labels = c("Edm", "Latin", "Pop", "R&B", "Rap", "Rock")) +
+    theme(panel.background = element_rect(fill = "white", colour = NA),
+          panel.border = element_rect(fill = NA, colour = "grey20"),
+          panel.grid = element_line(colour = "grey92"), 
+          panel.grid.minor = element_line(size = rel(0.5)),
+          plot.title = element_text(size = 14, face = "bold", color = "black"),
+          plot.caption = element_text(size = 10, color = "black"),
+          axis.title.x = element_text(size = 12, face = "bold", color = "black"),
+          axis.title.y = element_text(size = 12, face = "bold", color = "black"),
+          axis.text = element_text(size = 8, color = "black"),
+          strip.background = element_rect(fill = "grey85", colour = "grey20"),
+          strip.text.x = element_text(size = 12, face = "bold", color = "black"))
+```
+
+**Different customization you added**
+
++ Transform dataset **from wide to long**: Using the `tidyr::pivot_longer()` function to gather all audio features into one column, and prepare for visualization using facets by these features.
+
++ **Facet** of the plot: Using `ggplot2::facet_wrap()` to separate characteristics of the songs - *such as danceability, energy, key, etc.* - to different facets, allowing for comparison between song characteristics.
+
++ **Fill the color** of the plot by playlist genre: Using the `fill` argument in the `aes()` function to fill the color of the plot by playlist genrem, thus allow for a clearer comparison between playlist genre.
+
++ **Type** of the plot: Using `ggplot2::geom_boxplot()` instead of `ggplot2::geom_jitter()`, and log transform the audio features, to allow for a clearer comparisons of audio features between playlist genre.
+
++ **Font size** of axis text: The font size of the axis text is changed to appropriate size. Also using`ggplots::scale_x_discrete()` to customize the x-axis text.
+
++ **Font size** of axis title: The font size of both x-axis and y-axis are changed to appropriate size, also change to "Audio Features on log 10 scale".
+
++ **Title and caption** for the plot: Add title and caption for the plot to let readers understand the plot purpose and author for the plot.
