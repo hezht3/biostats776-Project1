@@ -263,6 +263,63 @@ spotify_songs %>%
 1. You need to customize it in **at least 7 ways** to make it better. 
 2. In your document, write 1 - 2 sentences about each different customization you added (using bullets -- i.e. there should be at least 7 bullet points each with 1-2 sentences), describing how you improved it.
 
+```{r}
+spotify_songs %>% 
+    ggplot(aes(y = track_popularity, x = playlist_subgenre, fill = playlist_genre, color = playlist_genre)) +
+    stat_boxplot(geom = "errorbar", width = 0.2) +
+    geom_boxplot() +
+    facet_wrap( ~ playlist_genre,
+                scales = "free_x",
+                labeller = as_labeller(c("edm" = "Edm",
+                                         "latin" = "Latin",
+                                         "pop" = "Pop",
+                                         "r&b" = "R&B",
+                                         "rap" = "Rap",
+                                         "rock" = "Rock"))) +
+    scale_fill_manual("Playlist Genre",
+                      values = c("#a55ff8", "#d5b3fe", "#bb86fc", "#018786", "#03dac6", "#3aa6a6"),
+                      guide = "none") +
+    scale_color_manual("Playlist Genre",
+                      values = c("#d8b9fd", "#ffffff", "#f7f0ff", "#3aa6a6", "#ffffff", "#94dfdf"),
+                      guide = "none") +
+    labs(x = "Playlist Subgenre",
+         y = "Song Popularity (higher is better)",
+         title = "Song Popularity In Different Playlist Genre and Subgenre",
+         caption = "Modified by Zhengting (Johnathan) He") +
+    theme(plot.background = element_rect(fill = "#262525", colour = NA),
+          panel.background = element_rect(fill = "#121212", colour = NA),
+          panel.border = element_rect(fill = NA, colour = "#1f1b24"),
+          panel.grid = element_line(colour = "#1f1b24"), 
+          panel.grid.minor = element_line(size = rel(0.5)),
+          plot.title = element_text(size = 12, face = "bold", color = "#ffffff"),
+          plot.caption = element_text(size = 10, color = "#ffffff"),
+          axis.title.x = element_text(size = 10, face = "bold", color = "#ffffff"),
+          axis.title.y = element_text(size = 10, face = "bold", color = "#ffffff"),
+          axis.text.x = element_text(angle = 20, hjust = 1, size = 8, color = "#ffffff"),
+          axis.text.y = element_text(size = 8, color = "#ffffff"),
+          strip.background = element_rect(fill = "#000000", colour = "grey20"),
+          strip.text.x = element_text(size = 10, face = "bold", color = "#f7f0ff"))
+```
+
+**Different customization added for the plot**
+
++ **Type** of the plot: I used `ggplot2::geom_boxplot()` function instead of `ggplot2::geom_violin()` to make the plot, and hopefully to allow for a clearer comparison of the central tendency and distribution between playlist genre and subgenre.
+
++ **Color** of the plot backgound, panel background, and strip background: I change the arguments in the `ggplots::theme()` function to make to plot to a dark theme.
+
++ **Angle** of x-axis text: I change the angle of the x-axis text in the `ggplot2::theme()`, to avoid the x-axis text overlap between each other.
+
++ **Title and caption** for the plot: I add the title and caption for the plot in the `ggplot2::labs()` function, to allow readers of the plot understand the aim of this data visualization and the author who modify the plot.
+
++ **Label** of axis for the plot: I add x-axis and y-axis labs for the plot in the `ggplot2::labs()` function based on codebook, instead of using the default variable name, to allow readers of the plot understand the x-axis and y-axis of the plot.
+
++ **Fill and color** of each subgenre: I used `ggplot2::scale_fill_manual()` and `ggplot2::scale_color_manual()` to change the color for each subgenre.
+
++ **Label** for strip title: I add `labeller` argument in `ggplot2::facet_wrap()` function to make first letter capital for each strip title.
+
++ **Hide legand** for the plot: I set `guide = "none"` argument in `ggplot2::scale_fill_manual()` and `ggplot2::scale_color_manual()` to hide legand for the plot.
+
+I also customized **my plot made in Part 4** to make it looks better.
 
 ```{r}
 spotify_songs %>%
@@ -293,7 +350,7 @@ spotify_songs %>%
           strip.text.x = element_text(size = 12, face = "bold", color = "black"))
 ```
 
-**Different customization you added**
+**Different customization added for the plot in Part 4**
 
 + Transform dataset **from wide to long**: Using the `tidyr::pivot_longer()` function to gather all audio features into one column, and prepare for visualization using facets by these features.
 
