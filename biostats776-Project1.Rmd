@@ -179,7 +179,7 @@ songs.summary %>%
     ggplot(aes(x = year_released, y = mean_score)) +
     geom_point(aes(colour = feature), size = 1) +
     geom_smooth(aes(colour = feature)) +
-    facet_wrap(~ feature) +
+    facet_wrap(~ feature, scales = "free") +
     labs(x = "Year When Album Released",
          y = "Mean of Audio Features",
          title = "Scatter Plot of 6 Mean Scores of Audio Features Over Time",
